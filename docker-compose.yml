@@ -1,0 +1,25 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    networks:
+      - entale-assignment-network
+
+  db:
+    image: mariadb:latest
+    container_name: entaleAssignmentdb
+    ports:
+      - 3306:3306
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MYSQL_DATABASE: entaleAssignment
+      TZ: "Asia/Tokyo"
+    volumes:
+      - ./sql_init:/docker-entrypoint-initdb.d
+    networks:
+      - entale-assignment-network
+
+networks:
+  entale-assignment-network:
+    driver: bridge
