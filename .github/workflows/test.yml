@@ -18,8 +18,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt install docker docker-compose -y
+          sudo docker compose up -d
       - name: execute midium test
         run: |
-          sleep 10
           cd internal
           go test -run Test
