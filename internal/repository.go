@@ -2,11 +2,21 @@ package internal
 
 import (
 	"database/sql"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func RegisterArticleToRepoitory(db *sql.DB, article Article) error {
+func RegisterArticleToRepoitory(db *sql.DB, article []Article) error {
+	for _, a := range article {
+		err := registerArticle(db, a)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func registerArticle(db *sql.DB, article Article) error {
 	tx, _ := db.Begin()
 
 	_, err := tx.Exec(`
@@ -17,7 +27,13 @@ func RegisterArticleToRepoitory(db *sql.DB, article Article) error {
 		(?,?,?,?)`, article.Id, article.Title, article.Body, article.PublishedAt)
 	if err != nil {
 		tx.Rollback()
-		return err
+		e := new(Error)
+		if strings.HasPrefix(err.Error(), "Error 1062") {
+			e.Message = "article has already been registered"
+			return e
+		}
+		e.Message = "failed to register article"
+		return e
 	}
 	for _, m := range article.Medias {
 		_, err = tx.Exec(`
@@ -30,7 +46,9 @@ func RegisterArticleToRepoitory(db *sql.DB, article Article) error {
 	}
 	if err != nil {
 		tx.Rollback()
-		return err
+		e := new(Error)
+		e.Message = "failed to register article"
+		return e
 	}
 	tx.Commit()
 	return nil
@@ -98,7 +116,9 @@ func ConnectSQL() (db *sql.DB, err error) {
 	// データベースのハンドルを取得する
 	db, err = sql.Open("mysql", "root:password@tcp(entaleAssignmentdb:3306)/entaleAssignment?parseTime=true")
 	if err != nil {
-		return nil, err
+		e := new(Error)
+		e.Message = "サーバーに接続できませんでした。サーバーが起動しているか確認して下さい。"
+		return nil, e
 	}
 	return db, nil
 }

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"strings"
 )
 
 type Handler struct {
@@ -17,16 +16,9 @@ func (h *Handler) RegisterArticle(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("fetch error"))
 	}
 	if article != nil {
-		for _, a := range *article {
-			err = RegisterArticleToRepoitory(h.DB, a)
-			if err != nil {
-				if strings.HasPrefix(err.Error(), "Error 1062") {
-					w.Write([]byte("the articles have already been registered"))
-					return
-				}
-				w.Write([]byte("DB error"))
-				return
-			}
+		err = RegisterArticleToRepoitory(h.DB, *article)
+		if err != nil {
+			w.Write([]byte(err.Error()))
 		}
 		w.Write([]byte("article was successfully registered"))
 	}
