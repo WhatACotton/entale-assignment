@@ -2,13 +2,13 @@ package internal
 
 import (
 	"database/sql"
-	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func RegisterArticleToRepoitory(db *sql.DB, article Article) error {
 	tx, _ := db.Begin()
+
 	_, err := tx.Exec(`
 	INSERT INTO
 		articles
@@ -33,7 +33,6 @@ func RegisterArticleToRepoitory(db *sql.DB, article Article) error {
 		return err
 	}
 	tx.Commit()
-	defer db.Close()
 	return nil
 }
 func GetArticleFromRepository(db *sql.DB) (articles []Article, err error) {
@@ -50,26 +49,26 @@ ON
 		return nil, err
 	}
 	for rows.Next() {
-		var a Article
+		var art Article
 		var media Media
 		var id int
-		err = rows.Scan(&a.Id, &a.Title, &a.Body, &a.PublishedAt, &media.Id, &id, &media.ContentUrl, &media.ContentType)
+		err = rows.Scan(&art.Id, &art.Title, &art.Body, &art.PublishedAt, &media.Id, &id, &media.ContentUrl, &media.ContentType)
 		if err != nil {
 			return nil, err
 		}
-		aa, exist := mappedArticle[a.Id]
-		if exist {
-			aa.Medias = append(aa.Medias, media)
-			mappedArticle[a.Id] = aa
-		} else {
-			a.Medias = append(a.Medias, media)
-			mappedArticle[a.Id] = a
+
+		a, exists := mappedArticle[id]
+		if !exists {
+			a = art
+			mappedArticle[id] = a
 		}
+		a.Medias = append(a.Medias, media)
+		mappedArticle[id] = a
+
 	}
 	for i := 0; i < len(mappedArticle); i++ {
 		articles = append(articles, mappedArticle[i+1])
 	}
-
 	return articles, nil
 }
 
@@ -95,15 +94,13 @@ CREATE TABLE IF NOT EXISTS medias (
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 `
 
-func ConnectSQL() (db *sql.DB) {
+func ConnectSQL() (db *sql.DB, err error) {
 	// データベースのハンドルを取得する
-	db, err := sql.Open("mysql", "root:password@tcp(entaleAssignmentdb:3306)/entaleAssignment?parseTime=true")
-
+	db, err = sql.Open("mysql", "root:password@tcp(entaleAssignmentdb:3306)/entaleAssignment?parseTime=true")
 	if err != nil {
-		// ここではエラーを返さない
-		log.Fatal(err)
+		return nil, err
 	}
-	return db
+	return db, nil
 }
 
 func DBInit(db *sql.DB) error {
