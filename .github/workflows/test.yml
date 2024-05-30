@@ -1,0 +1,24 @@
+name: testing
+
+on:
+  push:
+    branches: ["develop", main"]
+
+jobs:
+  midium_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.22.1"
+      - name: Setup databases
+        run: |
+          sudo apt-get update
+          sudo apt install docker docker-compose -y
+      - name: execute midium test
+        run: |
+          cd internal
+          go test -run Test
