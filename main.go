@@ -3,26 +3,26 @@ package main
 import (
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/whatacotton/entale-assignment/internal"
 )
 
 func main() {
-	time.Sleep(2 * time.Second)
-
-	if err := internal.DBInit(); err != nil {
-		log.Print(err)
+	db, err := internal.ConnectSQL()
+	if err != nil {
+		log.Fatal(err.Error())
 	}
-	log.Print("server start")
-
+	err = internal.DBInit(db)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer db.Close()
 	r := chi.NewRouter()
-
-	r.Use(middleware.Logger)
-	r.Get("/", internal.GetArticle)
-	r.Get("/register", internal.RegisterArticle)
+	h := internal.Handler{DB: db}
+	r.Get("/register", h.RegisterArticle)
+	r.Get("/", h.GetArticle)
+	log.Print("server started")
 	http.ListenAndServe(":8080", r)
 }
