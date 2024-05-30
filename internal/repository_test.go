@@ -3,10 +3,66 @@ package internal
 import (
 	"database/sql"
 	"log"
+	"reflect"
 	"testing"
 )
 
-func TestRepository(t *testing.T) {
+func TestIO(t *testing.T) {
+	db, err := connectSQLforTest()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = DBInit(db)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer db.Close()
+	cases := []struct {
+		name    string
+		article []Article
+	}{
+		{
+			name: "正常",
+			article: []Article{
+				{
+					Id:          1,
+					Title:       "title",
+					Body:        "body",
+					Medias:      []Media{{Id: 1, ContentUrl: "contentUrl", ContentType: "contentType"}},
+					PublishedAt: "2021-01-01",
+				},
+				{
+					Id:          2,
+					Title:       "title",
+					Body:        "body",
+					Medias:      []Media{{Id: 2, ContentUrl: "contentUrl", ContentType: "contentType"}},
+					PublishedAt: "2021-01-01",
+				},
+			},
+		},
+	}
+	for _, tt := range cases {
+		err = resetDB(db)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run(tt.name, func(t *testing.T) {
+			err := RegisterArticleToRepoitory(db, tt.article)
+			if err != nil {
+				t.Errorf("failed to register article")
+			}
+			articles, err := GetArticleFromRepository(db)
+			if err != nil {
+				t.Errorf("failed to get article")
+			}
+			if !reflect.DeepEqual(tt.article, articles) {
+				t.Errorf("expected %v, but got %v", tt.article, articles)
+			}
+		})
+	}
+}
+func TestRegister(t *testing.T) {
 	db, err := connectSQLforTest()
 	if err != nil {
 		log.Fatal(err.Error())
