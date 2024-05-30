@@ -5,7 +5,9 @@ services:
       - "8080:8080"
     networks:
       - entale-assignment-network
-
+    depends_on:
+      db:
+        condition: service_healthy
   db:
     image: mariadb:latest
     container_name: entaleAssignmentdb
@@ -13,10 +15,24 @@ services:
       - 3306:3306
     environment:
       MARIADB_ROOT_PASSWORD: password
-      MYSQL_DATABASE: entaleAssignment
       TZ: "Asia/Tokyo"
     volumes:
       - ./sql_init:/docker-entrypoint-initdb.d
+    healthcheck: # here
+      test:
+        [
+          "CMD",
+          "mariadb-admin",
+          "ping",
+          "-h",
+          "localhost",
+          "-uroot",
+          "-ppassword",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
     networks:
       - entale-assignment-network
 
