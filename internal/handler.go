@@ -27,13 +27,18 @@ func (h *Handler) GetArticle(w http.ResponseWriter, r *http.Request) {
 	article, err := GetArticleFromRepository(h.DB)
 	if err != nil {
 		w.Write([]byte("fetch error"))
+		return
 	}
 	if article == nil {
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("article not found"))
+		http.NotFound(w, r)
+		return
 	}
 	b, err := json.Marshal(article)
 	if err != nil {
 		w.Write([]byte("fetch error"))
+		return
 	}
 	w.Write(b)
 }
