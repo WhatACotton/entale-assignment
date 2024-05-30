@@ -28,7 +28,9 @@ func (h *Handler) GetArticle(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Write([]byte("fetch error"))
 	}
-
+	if article == nil {
+		w.Write([]byte("article not found"))
+	}
 	b, err := json.Marshal(article)
 	if err != nil {
 		w.Write([]byte("fetch error"))

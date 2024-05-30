@@ -158,7 +158,6 @@ func TestRegister(t *testing.T) {
 }
 
 func connectSQLforTest() (db *sql.DB, err error) {
-	// データベースのハンドルを取得する
 	db, err = sql.Open("mysql", "root:password@tcp(localhost:3306)/entaleAssignment?parseTime=true")
 	if err != nil {
 		log.Print("サーバーに接続できませんでした。サーバーが起動しているか確認して下さい。")
